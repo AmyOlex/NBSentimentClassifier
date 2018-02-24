@@ -31,10 +31,18 @@ def format_sentence(sent, swords=None):
                 filtered_words.append(w2v_model[word].tolist())
 
     # Sum all of the word vectors
+    # comment = [0.0 for _ in range(w2vsize)]
+    # for word in filtered_words:
+    #     for i in range(w2vsize):
+    #         comment[i] += word[i]
+
+    # Average all of the word vectors
     comment = [0.0 for _ in range(w2vsize)]
     for word in filtered_words:
         for i in range(w2vsize):
             comment[i] += word[i]
+    for i in range(w2vsize):
+        comment[i] = comment[i]/filtered_words.count()
 
     return comment
 
