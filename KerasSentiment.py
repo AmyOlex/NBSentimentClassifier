@@ -41,8 +41,9 @@ def format_sentence(sent, swords=None):
     for word in filtered_words:
         for i in range(w2vsize):
             comment[i] += word[i]
-    for i in range(w2vsize):
-        comment[i] = comment[i]/filtered_words.count()
+    if len(filtered_words) > 0:
+        for i in range(w2vsize):
+            comment[i] = comment[i]/len(filtered_words)
 
     return comment
 
