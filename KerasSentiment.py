@@ -31,10 +31,19 @@ def format_sentence(sent, swords=None):
                 filtered_words.append(w2v_model[word].tolist())
 
     # Sum all of the word vectors
+    # comment = [0.0 for _ in range(w2vsize)]
+    # for word in filtered_words:
+    #     for i in range(w2vsize):
+    #         comment[i] += word[i]
+
+    # Average all of the word vectors
     comment = [0.0 for _ in range(w2vsize)]
     for word in filtered_words:
         for i in range(w2vsize):
             comment[i] += word[i]
+    if len(filtered_words) > 0:
+        for i in range(w2vsize):
+            comment[i] = comment[i]/len(filtered_words)
 
     return comment
 
@@ -118,6 +127,7 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']
 negcutoff = math.floor(len(neg_list) * 3 / 4)
 poscutoff = math.floor(len(pos_list) * 3 / 4)
 
+avgAccuracy = 0
 print("Training {} times...".format(args.z))
 for z in range(int(args.z)):
     # train = neg_list[:negcutoff] + pos_list[:poscutoff]
@@ -144,8 +154,11 @@ for z in range(int(args.z)):
     test_labels = [x[1] for x in test]
     model.fit(train_data, train_labels, epochs=20, batch_size=10)
     scores = model.evaluate(test_data, test_labels)
+    avgAccuracy += scores[1]
     print("Test data accuracy: {}".format(scores[1]*100))
     # print("{}: {}".format(model.metrics_names[1], scores[1]*100))
+
+print("Average Accuracy: " + str(avgAccuracy / int(args.z)))
 
 # Import the file needing classification.
 if args.c is not None:
@@ -162,6 +175,7 @@ if args.c is not None:
     for i in range(len(predictions)):
         answers.append([predictions[i], sentences[i]])
         print("{} :: {}".format(predictions[i], sentences[i]))
+
 
 if args.d is not None:
     domain_list = []
