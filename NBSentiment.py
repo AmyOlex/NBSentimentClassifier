@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', metavar='stopwords', type=str, help='path to stopwords file', required=True)
     parser.add_argument('-p', metavar='posratings', type=str, help='a list of positive ratings as strings', required=False, default=['4','5'])
     parser.add_argument('-n', metavar='negratings', type=str, help='a list of negative ratings as strings', required=False, default=['1','2'])   
-    parser.add_argument('-z', metavar='iterations', type=str, help='the number of times to repeat the classifier training', required=False, default=1)   
+    parser.add_argument('-z', metavar='iterations', type=str, help='the number of times to repeat the classifier training', required=False, default=2)
     parser.add_argument('-d', metavar='domain', type=str, help='a file with text from a different domain.', required=False, default = None)   
     
     args = parser.parse_args()
@@ -184,12 +184,13 @@ if __name__ == "__main__":
             tmp_r = domain_list[c]['rating']
 
             if tmp_r in args.n:
-                d_list.append((format_sentence(tmp_c, stopwords), 'neg'))
+                d_list.append((format_sentence(tmp_c, stopwords), 0))
             if tmp_r in args.p:
-                d_list.append((format_sentence(tmp_c, stopwords), 'pos'))
+                d_list.append((format_sentence(tmp_c, stopwords), 1))
         
         #classifier2 = NaiveBayesClassifier.train(domain_list)
-        domain_accuracy = nltk.classify.util.accuracy(classifier, d_list)
+        model = NaiveBayesClassifier.train(dataset)
+        domain_accuracy = nltk.classify.util.accuracy(model, d_list)
         print('Classifier domain shift accuracy:', domain_accuracy)
         
         

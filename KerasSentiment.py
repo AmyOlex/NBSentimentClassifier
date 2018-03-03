@@ -94,7 +94,7 @@ parser.add_argument('-p', metavar='posratings', type=str, help='a list of positi
 parser.add_argument('-n', metavar='negratings', type=str, help='a list of negative ratings as strings',
                     required=False, default=['1', '2'])
 parser.add_argument('-z', metavar='iterations', type=str,
-                    help='the number of times to repeat the classifier training', required=False, default=1)
+                    help='the number of times to repeat the classifier training', required=False, default=2)
 parser.add_argument('-d', metavar='domain', type=str, help='a file with text from a different domain.',
                     required=False, default=None)
 parser.add_argument('-m', metavar='model', type=str, help='location of word2vec model to be used',
@@ -234,6 +234,19 @@ if args.d is not None:
 
     d_data = [word[0] for word in d_list]
     d_labels = [word[1] for word in d_list]
+
+    model = Sequential()
+    model.add(Dense(w2vsize, input_shape=(w2vsize,), activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize * 2, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(X, Y, epochs=50, batch_size=20, verbose=0)
 
     domain_accuracy = model.evaluate(d_data, d_labels)
     print("Classifier domain shift accuracy: {}".format(domain_accuracy[1]*100))
