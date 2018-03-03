@@ -151,13 +151,13 @@ if __name__ == "__main__":
     #     avgAccuracy = avgAccuracy + accuracy
     #     print('Classifier accuracy:', accuracy)
     #
-    #     ### Import the file needing classification.
-    #     if args.c is not None:
-    #         with open(args.c) as file:
-    #             toclass = file.readlines()
-    #
-    #         for sent in toclass:
-    #             print(classifier.classify(format_sentence(sent))+" :: "+sent)
+    if args.c is not None:
+        model = DecisionTreeClassifier.train(dataset)
+        with open(args.c) as file:
+            toclass = file.readlines()
+
+        for sent in toclass:
+            print(str(model.classify(format_sentence(sent)))+" :: "+sent)
     #
     # ### Count the occurences of each word that appeared in the top 10 over the 20 runs.
     # print("Average Accuracy: "+ str(avgAccuracy/int(args.z)))

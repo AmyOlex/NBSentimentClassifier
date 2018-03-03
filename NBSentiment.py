@@ -165,7 +165,7 @@ if __name__ == "__main__":
             toclass = file.readlines()
 
         for sent in toclass:
-            print(model.classify(format_sentence(sent))+" :: "+sent)
+            print(str(model.classify(format_sentence(sent)))+" :: "+sent)
 #
     # ### Count the occurences of each word that appeared in the top 10 over the 20 runs.
     # print("Average Accuracy: "+ str(avgAccuracy/int(args.z)))
