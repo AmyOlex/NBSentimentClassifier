@@ -197,6 +197,19 @@ print("%.2f%% (+/- %.2f%%)" % (numpy.mean(cvscores), numpy.std(cvscores)))
 
 # Import the file needing classification.
 if args.c is not None:
+    model = Sequential()
+    model.add(Dense(w2vsize, input_shape=(w2vsize,), activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize * 2, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(w2vsize, activation='relu'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(X, Y, epochs=50, batch_size=20, verbose=0)
+
     with open(args.c) as file:
         toclass = file.readlines()
     print("Predicting...")

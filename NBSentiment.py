@@ -156,14 +156,17 @@ if __name__ == "__main__":
     #     tlist = [i[0] for i in t10]
     #     top10list = top10list + tlist
     #
-    #     ### Import the file needing classification.
-    #     if args.c is not None:
-    #         with open(args.c) as file:
-    #             toclass = file.readlines()
-    #
-    #         for sent in toclass:
-    #             print(classifier.classify(format_sentence(sent))+" :: "+sent)
-    #
+
+        ### Import the file needing classification.
+
+    if args.c is not None:
+        model = NaiveBayesClassifier.train(dataset)
+        with open(args.c) as file:
+            toclass = file.readlines()
+
+        for sent in toclass:
+            print(model.classify(format_sentence(sent))+" :: "+sent)
+#
     # ### Count the occurences of each word that appeared in the top 10 over the 20 runs.
     # print("Average Accuracy: "+ str(avgAccuracy/int(args.z)))
     # my_counts = Counter(top10list)
