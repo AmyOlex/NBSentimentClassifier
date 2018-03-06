@@ -82,9 +82,9 @@ if __name__ == "__main__":
             stopwords = raw.read().translate(str.maketrans("", "", string.punctuation)).splitlines()
  
             if tmp_rating in args.n:
-                neg_list.append((format_sentence(tmp_com, stopwords), 0))
+                neg_list.append((format_sentence(tmp_com, stopwords), 'neg'))
             if tmp_rating in args.p:
-                pos_list.append((format_sentence(tmp_com, stopwords), 1))
+                pos_list.append((format_sentence(tmp_com, stopwords), 'pos'))
 
     seed = 123
     numpy.random.seed(seed)
@@ -116,6 +116,7 @@ if __name__ == "__main__":
         print("{}%".format(scores * 100))
         cvscores.append(scores * 100)
         # plot_model(model, to_file='model.png')
+        model.show_most_informative_features()
 
     print("%.2f%% (+/- %.2f%%)" % (numpy.mean(cvscores), numpy.std(cvscores)))
 
@@ -187,9 +188,9 @@ if __name__ == "__main__":
             tmp_r = domain_list[c]['rating']
 
             if tmp_r in args.n:
-                d_list.append((format_sentence(tmp_c, stopwords), 0))
+                d_list.append((format_sentence(tmp_c, stopwords), 'neg'))
             if tmp_r in args.p:
-                d_list.append((format_sentence(tmp_c, stopwords), 1))
+                d_list.append((format_sentence(tmp_c, stopwords), 'pos'))
         
         #classifier2 = NaiveBayesClassifier.train(domain_list)
         model = NaiveBayesClassifier.train(dataset)
