@@ -6,6 +6,8 @@
 ### 
 
 import string
+
+import numpy
 from nltk.classify import NaiveBayesClassifier
 import nltk.classify.util
 import nltk
@@ -21,6 +23,9 @@ from collections import Counter
 # @param sent The string to be formatted.
 # @param stopwords A list of stopwords to be removed. Default is None.
 # @return A dictionary of each word as the key and True as the value.
+from sklearn.model_selection import StratifiedKFold
+
+
 def format_sentence(sent, stopwords=None):
     # convert to lowercase
     sent = sent.translate(str.maketrans("", "", string.punctuation)).lower()
@@ -51,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', metavar='stopwords', type=str, help='path to stopwords file', required=True)
     parser.add_argument('-p', metavar='posratings', type=str, help='a list of positive ratings as strings', required=False, default=['4','5'])
     parser.add_argument('-n', metavar='negratings', type=str, help='a list of negative ratings as strings', required=False, default=['1','2'])   
-    parser.add_argument('-z', metavar='iterations', type=str, help='the number of times to repeat the classifier training', required=False, default=1)   
+    parser.add_argument('-z', metavar='iterations', type=str, help='the number of times to repeat the classifier training', required=False, default=2)
     parser.add_argument('-d', metavar='domain', type=str, help='a file with text from a different domain.', required=False, default = None)   
     
     args = parser.parse_args()
@@ -81,58 +86,92 @@ if __name__ == "__main__":
             if tmp_rating in args.p:
                 pos_list.append((format_sentence(tmp_com, stopwords), 'pos'))
 
-    
+    seed = 123
+    numpy.random.seed(seed)
     print("Total Negative Instances:"+str(len(neg_list))+"\nTotal Positive Instances:"+str(len(pos_list)))
-    
+    negcutoff = math.floor(len(neg_list) * 1)
+    poscutoff = math.floor(len(pos_list) * 1)
+    neg_idx_train = sorted(random.sample(range(len(neg_list)), negcutoff))
+    neg_train = [neg_list[i] for i in neg_idx_train]
+
+    pos_idx_train = sorted(random.sample(range(len(pos_list)), poscutoff))
+    pos_train = [pos_list[i] for i in pos_idx_train]
+
+    dataset = neg_train + pos_train
+
+    X = [x[0] for x in dataset]
+    Y = [x[1] for x in dataset]
+    kfold = StratifiedKFold(n_splits=int(args.z), shuffle=True, random_state=seed)
+    cvscores = []
+    for train, test in kfold.split(X,Y):
+        # print(dataset[train[0]])
+        train_data = []
+        for i in range(len(train)):
+            train_data.append(dataset[train[i]])
+        test_data = []
+        for i in range(len(test)):
+            test_data.append(dataset[test[i]])
+        model = NaiveBayesClassifier.train(train_data)
+        scores = nltk.classify.util.accuracy(model, test_data)
+        print("{}%".format(scores * 100))
+        cvscores.append(scores * 100)
+        # plot_model(model, to_file='model.png')
+        model.show_most_informative_features()
+
+    print("%.2f%% (+/- %.2f%%)" % (numpy.mean(cvscores), numpy.std(cvscores)))
+
     ### create training and test sets
-    ## set the cutoffs
-    negcutoff = math.floor(len(neg_list)*3/4)
-    poscutoff = math.floor(len(pos_list)*3/4)
+    # ## set the cutoffs
+    # negcutoff = math.floor(len(neg_list)*3/4)
+    # poscutoff = math.floor(len(pos_list)*3/4)
 
-    top10list = []
-    avgAccuracy = 0
-    for z in range(int(args.z)):
-        #train = neg_list[:negcutoff] + pos_list[:poscutoff]
-        #test = neg_list[negcutoff:] + pos_list[poscutoff:]
-        neg_idx_train = sorted(random.sample(range(len(neg_list)), negcutoff))
-        neg_train = [neg_list[i] for i in neg_idx_train]
+    # top10list = []
+    # avgAccuracy = 0
+    # for z in range(int(args.z)):
+    #     #train = neg_list[:negcutoff] + pos_list[:poscutoff]
+    #     #test = neg_list[negcutoff:] + pos_list[poscutoff:]
+    #     neg_idx_train = sorted(random.sample(range(len(neg_list)), negcutoff))
+    #     neg_train = [neg_list[i] for i in neg_idx_train]
+    #
+    #     neg_idx_test = set(range(len(neg_list))) - set(neg_idx_train)
+    #     neg_test = [neg_list[i] for i in neg_idx_test]
+    #
+    #
+    #     pos_idx_train = sorted(random.sample(range(len(pos_list)), poscutoff))
+    #     pos_train = [pos_list[i] for i in pos_idx_train]
+    #
+    #     pos_idx_test = set(range(len(pos_list))) - set(pos_idx_train)
+    #     pos_test = [pos_list[i] for i in pos_idx_test]
+    #
+    #     train = neg_train + pos_train
+    #     test = neg_test + pos_test
+    #     print('Training on %d instances, testing on %d instances' % (len(train), len(test)))
+    #
+    #     classifier = NaiveBayesClassifier.train(train)
+    #     accuracy = nltk.classify.util.accuracy(classifier, test)
+    #     avgAccuracy = avgAccuracy + accuracy
+    #     print('Classifier accuracy:', accuracy)
+    #     classifier.show_most_informative_features()
+    #
+    #     t10 = classifier.most_informative_features(10)
+    #     tlist = [i[0] for i in t10]
+    #     top10list = top10list + tlist
+    #
 
-        neg_idx_test = set(range(len(neg_list))) - set(neg_idx_train)
-        neg_test = [neg_list[i] for i in neg_idx_test]
-
-
-        pos_idx_train = sorted(random.sample(range(len(pos_list)), poscutoff))
-        pos_train = [pos_list[i] for i in pos_idx_train]
-
-        pos_idx_test = set(range(len(pos_list))) - set(pos_idx_train)
-        pos_test = [pos_list[i] for i in pos_idx_test]
-
-        train = neg_train + pos_train
-        test = neg_test + pos_test
-        print('Training on %d instances, testing on %d instances' % (len(train), len(test)))
-
-        classifier = NaiveBayesClassifier.train(train)
-        accuracy = nltk.classify.util.accuracy(classifier, test)
-        avgAccuracy = avgAccuracy + accuracy
-        print('Classifier accuracy:', accuracy)
-        classifier.show_most_informative_features()
-    
-        t10 = classifier.most_informative_features(10)
-        tlist = [i[0] for i in t10]
-        top10list = top10list + tlist
-    
         ### Import the file needing classification.
-        if args.c is not None:
-            with open(args.c) as file:
-                toclass = file.readlines()
-    
-            for sent in toclass:
-                print(classifier.classify(format_sentence(sent))+" :: "+sent)
-    
-    ### Count the occurences of each word that appeared in the top 10 over the 20 runs.
-    print("Average Accuracy: "+ str(avgAccuracy/int(args.z)))
-    my_counts = Counter(top10list)
-    print(my_counts)
+
+    if args.c is not None:
+        model = NaiveBayesClassifier.train(dataset)
+        with open(args.c) as file:
+            toclass = file.readlines()
+
+        for sent in toclass:
+            print(str(model.classify(format_sentence(sent)))+" :: "+sent)
+#
+    # ### Count the occurences of each word that appeared in the top 10 over the 20 runs.
+    # print("Average Accuracy: "+ str(avgAccuracy/int(args.z)))
+    # my_counts = Counter(top10list)
+    # print(my_counts)
     
     
     if args.d is not None:
@@ -154,7 +193,8 @@ if __name__ == "__main__":
                 d_list.append((format_sentence(tmp_c, stopwords), 'pos'))
         
         #classifier2 = NaiveBayesClassifier.train(domain_list)
-        domain_accuracy = nltk.classify.util.accuracy(classifier, d_list)
+        model = NaiveBayesClassifier.train(dataset)
+        domain_accuracy = nltk.classify.util.accuracy(model, d_list)
         print('Classifier domain shift accuracy:', domain_accuracy)
         
         
